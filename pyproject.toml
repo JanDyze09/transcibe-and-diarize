@@ -1,0 +1,21 @@
+[project]
+name = "nemotron-diarization-test"
+version = "0.1.0"
+description = "Can this PC run NVIDIA Nemotron 3 Diarization? A CPU-first bench."
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "torch",
+    # The model's config says transformers 5.18.0.dev0; 5.17 doesn't know
+    # `nemotron3_diarization`. Switch back to a plain pin once 5.18 is on PyPI.
+    "transformers @ git+https://github.com/huggingface/transformers",
+    "librosa",  # the model's feature extractor imports it
+    "faster-whisper",
+    "av",
+    "numpy",
+    "fastapi",
+    "uvicorn",
+    "python-multipart",
+]
+
+[tool.uv]
+package = false

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Who Said What</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233447d4'/%3E%3Crect x='6' y='9' width='12' height='4' rx='2' fill='%23fff'/%3E%3Crect x='12' y='15' width='14' height='4' rx='2' fill='%23fff' opacity='.7'/%3E%3Crect x='6' y='21' width='8' height='4' rx='2' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="8" fill="currentColor"/>
+        <rect x="6" y="9" width="12" height="4" rx="2" fill="var(--accent-text)"/>
+        <rect x="12" y="15" width="14" height="4" rx="2" fill="var(--accent-text)" opacity=".7"/>
+        <rect x="6" y="21" width="8" height="4" rx="2" fill="var(--accent-text)"/>
+      </svg>
+      <div>
+        <h1>Who said what</h1>
+        <p>Nemotron 3 Diarization + Whisper, running on this machine</p>
+      </div>
+    </div>
+    <div class="model-status" id="model-status" data-state="loading">
+      <span class="dot" aria-hidden="true"></span>
+      <span id="model-status-text">Loading model…</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="card input-card" aria-label="Recording">
+      <label class="drop" id="drop">
+        <input type="file" id="file-input" accept="audio/*,video/*,.wav,.m4a,.mp3,.opus,.flac,.ogg,.webm">
+        <span class="drop-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 12v-2M8 15V7M12 18V5M16 15V8M20 13v-3" /></svg>
+        </span>
+        <span class="drop-text" id="drop-text">
+          <strong>Drop a recording here</strong>
+          <span>or click to choose. Any audio file works: wav, m4a, mp3, opus…</span>
+        </span>
+      </label>
+      <button type="button" class="link" id="sample-btn" hidden>Or try the built-in two-voice sample</button>
+
+      <div class="controls">
+        <fieldset class="segmented">
+          <legend>Which side</legend>
+          <div class="segmented-options">
+            <label><input type="radio" name="channel" value="mix" checked><span>Both</span></label>
+            <label><input type="radio" name="channel" value="mic"><span>Mic</span></label>
+            <label><input type="radio" name="channel" value="system"><span>System audio</span></label>
+          </div>
+        </fieldset>
+        <label class="field">
+          <span>How much</span>
+          <select id="limit">
+            <option value="">Whole file</option>
+            <option value="60">First minute</option>
+            <option value="300">First 5 minutes</option>
+            <option value="600">First 10 minutes</option>
+            <option value="1800">First 30 minutes</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Transcribe with</span>
+          <select id="model">
+            <option value="">Nothing (speakers only)</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Language</span>
+          <select id="language"></select>
+        </label>
+        <button type="button" class="primary" id="run-btn" disabled>Run</button>
+      </div>
+      <p class="hint">Mic and System audio pick one side of a CoWorker stereo recording. For any other file, leave it on Both. Transcription runs on this CPU and is much slower than finding speakers. Try a short slice first.</p>
+
+      <div class="run-status" id="run-status" hidden>
+        <div class="bar" id="run-bar" aria-hidden="true"><span></span></div>
+        <span id="run-status-text" role="status"></span>
+      </div>
+      <p class="error" id="error" role="alert" hidden></p>
+    </section>
+
+    <section id="results" class="results" hidden aria-label="Results">
+      <div class="results-head">
+        <dl class="summary" id="summary"></dl>
+        <div class="exports" role="group" aria-label="Export">
+          <span>Export</span>
+          <button type="button" data-export="srt">SRT</button>
+          <button type="button" data-export="txt">TXT</button>
+          <button type="button" data-export="rttm">RTTM</button>
+          <button type="button" data-export="json">JSON</button>
+        </div>
+      </div>
+      <p class="note" id="mono-note" hidden>This file is mono, so picking Mic or System audio made no difference.</p>
+
+      <div class="card player-card">
+        <audio id="audio" controls preload="metadata"></audio>
+        <div id="timeline"></div>
+        <div class="timeline-foot">
+          <span class="keys"><kbd>Space</kbd> play / pause <kbd>←</kbd><kbd>→</kbd> 5 seconds</span>
+          <label class="field inline">
+            <span>Zoom</span>
+            <select id="zoom">
+              <option value="1">Fit</option>
+              <option value="2">2×</option>
+              <option value="5">5×</option>
+              <option value="10">10×</option>
+              <option value="25">25×</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="columns">
+        <section class="card">
+          <h2>Speakers</h2>
+          <p class="card-sub">Click a name to rename it. Names are remembered for this file.</p>
+          <ol class="speakers" id="speakers"></ol>
+        </section>
+        <section class="card">
+          <h2>Turns <span class="count" id="turn-count"></span></h2>
+          <p class="card-sub">Click a turn to play from there.</p>
+          <ol class="turns" id="turns"></ol>
+        </section>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
